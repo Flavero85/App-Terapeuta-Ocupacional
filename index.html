@@ -31,31 +31,27 @@
             font-family: var(--font-primary); font-size: calc(1rem * var(--font-scale));
             background-color: var(--primary-bg);
             background-image: radial-gradient(at top left, var(--gradient-1), transparent 50%), radial-gradient(at top right, var(--gradient-2), transparent 50%), radial-gradient(at bottom left, var(--gradient-3), transparent 50%), radial-gradient(at bottom right, var(--gradient-4), transparent 50%);
-            transition: background-color 0.3s, font-size 0.3s;
+            transition: background-color 0.3s, font-size 0.3s, background-image 0.3s;
         }
         .dynamic-card { background-color: rgba(255, 255, 255, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(204, 251, 241, 0.5); }
         html.dark .dynamic-card { background-color: rgba(6, 46, 43, 0.6); border: 1px solid rgba(19, 78, 74, 0.8); }
-        
+        .theme-dot { width: 28px; height: 28px; border-radius: 9999px; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
+        .theme-dot:hover { transform: scale(1.1); }
+        .theme-dot.selected { border-color: var(--primary-dark); transform: scale(1.15); box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+
         @keyframes page-fade-in { from { opacity: 0; } to { opacity: 1; } }
         @keyframes item-fade-in-up { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes modal-slide-in { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes modal-slide-out { to { opacity: 0; transform: translateY(100%); } }
         @keyframes toast-in { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes toast-out { to { transform: translateY(120%); opacity: 0; } }
-
         .animate-page-fade-in { animation: page-fade-in 0.5s ease-out forwards; }
         .animate-item-fade-in-up { animation: item-fade-in-up 0.5s ease-out forwards; }
-        .modal-content.in { animation: modal-slide-in 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-        .modal-content.out { animation: modal-slide-out 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards; }
-        .toast-notification.in { animation: toast-in 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-        .toast-notification.out { animation: toast-out 0.5s cubic-bezier(0.5, 0, 0.75, 0) forwards; }
         .btn-press { transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out; }
         .btn-press:active { transform: scale(0.97); box-shadow: none; }
     </style>
 </head>
-<body class="min-h-screen text-[var(--secondary-text)] p-4 sm:p-6 md:p-8 pb-28 animate-page-fade-in">
+<body class="min-h-screen text-[var(--secondary-text)] p-4 sm:p-6 md:p-8 pb-40">
     
-    <div id="toast-container" class="fixed bottom-24 right-4 z-[100] space-y-3"></div>
+    <div id="toast-container" class="fixed bottom-40 right-4 z-[100] space-y-3"></div>
 
     <div class="max-w-4xl mx-auto">
         <header class="relative flex items-center justify-center gap-4 mb-8 text-center sm:text-left">
@@ -76,9 +72,12 @@
             
             <section>
                 <h2 class="font-semibold text-xl text-[var(--primary-dark)] mb-4">Clientes Cadastrados</h2>
-                <div class="mb-6 relative">
+                <div class="mb-6 relative flex items-center gap-2">
                     <input type="text" id="search-patient" placeholder="Pesquisar cliente..." class="w-full px-4 py-3 pl-10 rounded-xl bg-[var(--secondary-bg)] border border-[var(--border-color)] focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] text-[var(--primary-dark)] transition-shadow focus:shadow-lg">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                    <button id="toggle-visibility-btn" class="p-3 rounded-full bg-[var(--secondary-bg)] border border-[var(--border-color)] text-[var(--primary-dark)] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <!-- Ícone de olho será inserido aqui pelo JS -->
+                    </button>
                 </div>
                 <div id="patient-list" class="space-y-4"></div>
             </section>
@@ -100,13 +99,21 @@
                             <span class="font-medium">Modo Escuro</span>
                             <input type="checkbox" id="dark-mode-toggle" class="toggle-checkbox">
                         </div>
-                        <div class="flex justify-between items-center">
+                         <div class="flex justify-between items-center">
                             <span class="font-medium">Tamanho da Fonte</span>
                             <div class="flex bg-[var(--secondary-bg)] p-1 rounded-lg border border-[var(--border-color)]">
                                 <button data-size="font-sm" class="font-size-btn px-3 py-1 text-sm rounded-md transition-colors">P</button>
                                 <button data-size="font-base" class="font-size-btn px-3 py-1 text-sm rounded-md transition-colors">M</button>
                                 <button data-size="font-lg" class="font-size-btn px-3 py-1 text-sm rounded-md transition-colors">G</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                 <div>
+                    <h3 class="text-md font-semibold text-[var(--primary-text)] mb-3">Temas</h3>
+                     <div class="p-4 bg-[var(--primary-bg)] rounded-xl">
+                        <div id="theme-selector" class="flex items-center justify-around gap-2">
+                           <!-- Dots de temas serão inseridos aqui -->
                         </div>
                     </div>
                 </div>
@@ -133,7 +140,7 @@
     </div>
 
     <!-- Barra de Navegação Inferior -->
-    <nav class="fixed bottom-0 left-0 right-0 h-20 dynamic-card flex justify-around items-center shadow-lg">
+    <nav class="fixed bottom-14 left-0 right-0 h-20 dynamic-card flex justify-around items-center shadow-lg z-50">
         <a href="index.html" class="nav-link flex flex-col items-center justify-center text-[var(--secondary-text)] transition-colors w-full h-full">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M15 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM3.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zM8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
             <span class="text-xs mt-1">Clientes</span>
@@ -147,6 +154,23 @@
             <span class="text-xs mt-1">Anotações</span>
         </a>
     </nav>
+
+    <!-- Rodapé Fixo -->
+    <footer class="fixed bottom-0 left-0 right-0 h-14 dynamic-card flex justify-center items-center shadow-lg text-[var(--secondary-text)] font-semibold text-sm z-40 border-t border-[var(--border-color)]">
+        <div class="flex items-center justify-center gap-6">
+            <a href="https://www.flavioitech.com" target="_blank" class="flex items-center gap-2 hover:text-[var(--primary)] transition-colors">
+                <img src="logo2.png" alt="Logo FlavioItech" class="h-6 w-6 rounded-full object-contain" onerror="this.style.display='none'">
+                <span>Site FlavioItech</span>
+            </a>
+            <a href="https://wa.me/5519998821845" target="_blank" class="flex items-center gap-2 hover:text-[var(--primary)] transition-colors">
+                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor">
+                    <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 221.9-99.6 221.9-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.8 0-67.6-9.5-97.8-27.2l-6.9-4.1-72.7 19.1L48.4 358s-4.4-7.2-12.1-99.6c0-11.4 2.9-22.5 8.4-32.9l16.4-30.3c34.9-64.4 106.4-104.1 180.1-104.1 32.5 0 63.8 12.8 86.8 35.7 23 22.9 35.9 54.1 35.9 86.6 0 92.8-74.9 167.8-167.7 167.8zm118.9-194.3c-4.1-2-24.5-12.1-28.4-13.5-3.9-1.4-6.7-2-9.5 2-2.8 4-10.8 13.5-13.2 16.2-2.4 2.8-4.8 3.1-8.9 1.1-4.1-2-17.4-6.4-33.1-20.4-12.2-10.8-20.4-24.1-22.8-28.2-2.4-4.1-.2-6.3 1.8-8.3 1.8-1.8 4.1-4.8 6.1-7.1 2-2.3 2.7-4.1 4.1-6.9 1.4-2.8.7-5.1-1.4-7.1s-9.5-22.8-13-31.1c-3.5-8.3-7.1-7.1-9.5-7.1-2.4 0-5.1 0-7.8 0-2.8 0-7.1 1.1-10.8 5.1-3.7 4-14.2 13.9-14.2 33.9 0 20 14.5 39.3 16.5 41.7 2 2.4 28.4 43.4 69.1 60.9 9.8 4.2 17.5 6.7 23.4 8.6 5.9 1.9 11.2 1.6 15.5 1 4.8-.6 15.1-6.2 17.2-12.1 2.1-5.9 2.1-11 1.4-12.1-0.7-1.1-2.8-1.8-5.9-3.8z"/>
+                </svg>
+                <span>19 99882-1845</span>
+            </a>
+        </div>
+    </footer>
+
     <script src="script.js" defer></script>
 </body>
 </html>

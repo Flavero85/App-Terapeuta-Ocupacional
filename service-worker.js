@@ -1,5 +1,5 @@
 // ATUALIZAÇÃO CRÍTICA: Versão do cache incrementada para forçar a atualização do app.
-const CACHE_NAME = 'app-to-cache-v25';
+const CACHE_NAME = 'app-to-cache-v27';
 // Lista de arquivos e recursos essenciais para o funcionamento offline
 const URLS_TO_CACHE = [
   './',
@@ -12,6 +12,7 @@ const URLS_TO_CACHE = [
   'manifest.json',
   'icon-192.jpg',
   'icon-512.jpg',
+  'logo2.png',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
@@ -21,7 +22,7 @@ self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('Cache v25 aberto e arquivos sendo adicionados.');
+      console.log('Cache v27 aberto e arquivos sendo adicionados.');
       return cache.addAll(URLS_TO_CACHE);
     })
   );
