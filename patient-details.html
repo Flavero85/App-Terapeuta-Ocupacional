@@ -9,6 +9,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.jpg">
     <meta name="theme-color" content="#14b8a6">
+    <!-- Biblioteca para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --font-primary: 'Poppins', sans-serif; --primary-bg: #f0fdfa; --secondary-bg: #ffffff; --primary-text: #0f766e; --secondary-text: #115e59; --border-color: #ccfbf1; --primary: #14b8a6; --primary-light: #ccfbf1; --primary-dark: #0f766e; --gradient-1: #a7f3d0; --gradient-2: #bae6fd; --gradient-3: #ddd6fe; --gradient-4: #fbcfe8; }
         html.dark { --primary-bg: #0c1a1e; --secondary-bg: #062e2b; --primary-text: #99f6e4; --secondary-text: #5eead4; --border-color: #134e4a; }
@@ -35,33 +37,40 @@
         </header>
 
         <div class="space-y-8">
-            <section class="dynamic-card p-6 rounded-2xl shadow-lg">
-                <div class="relative flex justify-between items-start">
-                    <div class="flex items-center gap-4">
-                        <label for="profile-picture-input" class="cursor-pointer">
-                            <div id="profile-picture-display" class="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-white bg-cover bg-center" style="background-color: var(--primary);">
-                                <!-- Iniciais ou Imagem aparecerão aqui -->
-                            </div>
-                        </label>
-                         <input type="file" id="profile-picture-input" class="hidden" accept="image/*">
-                        <h1 id="patient-name" class="text-3xl font-bold text-[var(--primary-dark)]">Carregando...</h1>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button id="patient-options-btn" class="btn-press text-gray-500 hover:text-[var(--primary-dark)] transition-colors p-2 rounded-full hover:bg-black/10">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
-                        </button>
-                        <div id="patient-options-menu" class="hidden absolute top-12 right-0 z-20 mt-2 w-56 dynamic-card rounded-xl shadow-lg border border-[var(--border-color)]">
-                            <div class="py-1">
-                                <a href="#" id="export-txt-btn" class="block px-4 py-2 text-sm text-[var(--primary-text)] hover:bg-black/5">Salvar Relatório (.txt)</a>
-                                <a href="#" id="export-single-json-btn" class="block px-4 py-2 text-sm text-[var(--primary-text)] hover:bg-black/5">Exportar Cliente (.json)</a>
-                                <a href="#" id="delete-patient-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-red-500 hover:text-white">Excluir Cliente</a>
+            <!-- Card de Informações do Cliente para Exportação -->
+            <div id="pdf-export-area">
+                <section id="patient-info-card" class="dynamic-card p-6 rounded-2xl shadow-lg">
+                    <div class="relative flex justify-between items-start">
+                        <div class="flex items-center gap-4">
+                            <label for="profile-picture-input" class="cursor-pointer">
+                                <div id="profile-picture-display" class="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-white bg-cover bg-center" style="background-color: var(--primary);">
+                                    <!-- Iniciais ou Imagem aparecerão aqui -->
+                                </div>
+                            </label>
+                             <input type="file" id="profile-picture-input" class="hidden" accept="image/*">
+                            <h1 id="patient-name" class="text-3xl font-bold text-[var(--primary-dark)]">Carregando...</h1>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="patient-options-btn" class="btn-press text-gray-500 hover:text-[var(--primary-dark)] transition-colors p-2 rounded-full hover:bg-black/10">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
+                            </button>
+                            <div id="patient-options-menu" class="hidden absolute top-12 right-0 z-20 mt-2 w-56 dynamic-card rounded-xl shadow-lg border border-[var(--border-color)]">
+                                <div class="py-1">
+                                    <a href="#" id="edit-patient-btn" class="block px-4 py-2 text-sm text-[var(--primary-text)] hover:bg-black/5">Editar Dados</a>
+                                    <a href="#" id="export-pdf-btn" class="block px-4 py-2 text-sm text-[var(--primary-text)] hover:bg-black/5">Exportar para PDF</a>
+                                    <a href="#" id="delete-patient-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-red-500 hover:text-white">Excluir Cliente</a>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div id="patient-details-container" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-[var(--secondary-text)]"></div>
-                 <div id="family-phone-container" class="mt-4 pt-4 border-t border-[var(--border-color)]"></div>
-            </section>
+                    <div id="patient-details-container" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-[var(--secondary-text)]"></div>
+                </section>
+                
+                <section class="dynamic-card p-6 rounded-2xl shadow-lg mt-8">
+                    <h2 class="text-xl font-semibold text-[var(--primary-dark)]">Informações Clínicas</h2>
+                    <div id="clinical-info-container" class="mt-4 space-y-4"></div>
+                </section>
+            </div>
 
              <section class="dynamic-card p-6 rounded-2xl shadow-lg">
                  <h2 class="text-xl font-semibold text-[var(--primary-dark)] mb-4">Link Externo</h2>
@@ -74,13 +83,6 @@
                 </form>
             </section>
             
-            <section class="dynamic-card p-6 rounded-2xl shadow-lg">
-                <h2 class="text-xl font-semibold text-[var(--primary-dark)]">Informações Clínicas</h2>
-                <div id="diagnostico-container" class="mt-4 pt-4 border-t border-[var(--border-color)]"></div>
-                <div id="objetivos-container" class="mt-4 pt-4 border-t border-[var(--border-color)]"></div>
-                <div id="intervencao-container" class="mt-4 pt-4 border-t border-[var(--border-color)]"></div>
-            </section>
-
             <section class="dynamic-card p-6 rounded-2xl shadow-lg">
                 <h2 class="text-xl font-semibold text-[var(--primary-dark)]">Evolução e Sessões</h2>
                 <form id="session-form" class="mt-6 p-4 bg-[var(--primary-bg)] border border-[var(--border-color)] rounded-lg">
@@ -95,6 +97,60 @@
             </section>
         </div>
     </main>
+
+    <!-- Modal de Edição -->
+    <div id="edit-patient-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="dynamic-card rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold text-[var(--primary-dark)] mb-6">Editar Dados do Cliente</h2>
+            <form id="edit-patient-form" class="space-y-4">
+                <div>
+                    <label for="edit-name" class="block text-sm font-medium">Nome Completo</label>
+                    <input type="text" id="edit-name" required class="mt-1 block w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-dob" class="block text-sm font-medium">Data de Nascimento</label>
+                        <input type="date" id="edit-dob" class="mt-1 block w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg">
+                    </div>
+                    <div>
+                        <label for="edit-age" class="block text-sm font-medium">Idade</label>
+                        <input type="number" id="edit-age" readonly class="mt-1 block w-full px-3 py-2 bg-gray-200 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-phone" class="block text-sm font-medium">Telefone (WhatsApp)</label>
+                        <input type="tel" id="edit-phone" class="mt-1 block w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg">
+                    </div>
+                    <div>
+                        <label for="edit-family-phone" class="block text-sm font-medium">Contato Familiar</label>
+                        <input type="tel" id="edit-family-phone" class="mt-1 block w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg">
+                    </div>
+                </div>
+                <div>
+                    <label for="edit-address" class="block text-sm font-medium">Endereço</label>
+                    <input type="text" id="edit-address" class="mt-1 block w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg">
+                </div>
+                <div>
+                    <label for="edit-diagnostico" class="block text-sm font-medium">Diagnóstico</label>
+                    <textarea id="edit-diagnostico" rows="3" class="mt-1 block w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg"></textarea>
+                </div>
+                <div>
+                    <label for="edit-objetivos" class="block text-sm font-medium">Objetivos</label>
+                    <textarea id="edit-objetivos" rows="3" class="mt-1 block w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg"></textarea>
+                </div>
+                <div>
+                    <label for="edit-intervencao" class="block text-sm font-medium">Intervenção/Abordagem</label>
+                    <textarea id="edit-intervencao" rows="3" class="mt-1 block w-full px-3 py-2 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-lg"></textarea>
+                </div>
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" id="cancel-edit-btn" class="btn-press bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg">Cancelar</button>
+                    <button type="submit" class="btn-press bg-[var(--primary)] text-white font-semibold py-2 px-6 rounded-lg">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="script.js" defer></script>
 </body>
 </html>

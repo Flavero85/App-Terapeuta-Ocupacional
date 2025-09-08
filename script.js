@@ -19,24 +19,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const getInitials = (name) => (name || '').trim().split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
     const stringToHslColor = (str, s, l) => { let h = 0; for (let i = 0; i < (str || '').length; i++) h = str.charCodeAt(i) + ((h << 5) - h); return `hsl(${h % 360}, ${s}%, ${l}%)`; };
     const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Não informado';
-    const downloadFile = (content, fileName, type) => {
-        const blob = new Blob([content], { type });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = fileName;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
     
     // === SISTEMA DE NOTIFICAÇÃO (TOAST) ===
     const showToast = (message, type = 'success') => {
         const container = document.getElementById('toast-container'); if (!container) return;
         const toast = document.createElement('div');
         const bgColor = type === 'success' ? 'bg-teal-500' : 'bg-red-500';
-        toast.className = `toast-notification ${bgColor} text-white font-semibold py-3 px-5 rounded-lg shadow-xl in`;
+        toast.className = `toast-notification ${bgColor} text-white font-semibold py-3 px-5 rounded-lg shadow-xl animate-item-fade-in-up`;
         toast.textContent = message;
         container.appendChild(toast);
         setTimeout(() => {
-            toast.classList.replace('in', 'out');
+            toast.classList.remove('animate-item-fade-in-up');
+            toast.style.animation = 'toast-out 0.5s ease-out forwards';
             toast.addEventListener('animationend', () => toast.remove());
         }, 3000);
     };
@@ -87,7 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('export-json-btn')?.addEventListener('click', () => {
             const data = { patients: getFromDB('patientsDB_marcella'), notes: getFromDB('notesDB_marcella'), schedule: getFromDB('scheduleDB_marcella') };
-            downloadFile(JSON.stringify(data, null, 2), `backup_completo_app_to_${new Date().toISOString().slice(0,10)}.json`, 'application/json');
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `backup_completo_app_to_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
             showToast('Backup completo exportado!');
         });
 
@@ -203,39 +201,45 @@ document.addEventListener('DOMContentLoaded', () => {
         let patient = getPatientById(patientId);
         if (!patient) { document.body.innerHTML = 'Cliente não encontrado.'; return; }
         
-        const updatePatientData = (p) => { let ps = getFromDB('patientsDB_marcella'); const i = ps.findIndex(x => x.id === p.id); if (i > -1) { ps[i] = p; saveToDB('patientsDB_marcella', ps); patient = p; } };
+        const updatePatientData = (p) => { 
+            let ps = getFromDB('patientsDB_marcella'); 
+            const i = ps.findIndex(x => x.id === p.id); 
+            if (i > -1) { 
+                ps[i] = p; 
+                saveToDB('patientsDB_marcella', ps); 
+                patient = p; 
+            } 
+        };
         
-        document.getElementById('patient-name').textContent = patient.name; document.title = patient.name;
-        
-        document.getElementById('patient-details-container').innerHTML = `<p><strong>Idade:</strong> ${patient.age || 'N/A'} anos</p><p><strong>Telefone:</strong> ${patient.phone || 'Não informado'}</p>`;
-        document.getElementById('diagnostico-container').innerHTML = `<h3 class="font-semibold text-[var(--primary-text)]">Diagnóstico</h3><p class="mt-2 whitespace-pre-wrap">${patient.diagnostico || 'Não informado'}</p>`;
-        document.getElementById('objetivos-container').innerHTML = `<h3 class="font-semibold text-[var(--primary-text)]">Objetivos</h3><p class="mt-2 whitespace-pre-wrap">${patient.objetivos || 'Não informado'}</p>`;
-        document.getElementById('intervencao-container').innerHTML = `<h3 class="font-semibold text-[var(--primary-text)]">Intervenção/Abordagem</h3><p class="mt-2 whitespace-pre-wrap">${patient.intervencao || 'Não informado'}</p>`;
+        const renderAllPatientData = () => {
+            document.getElementById('patient-name').textContent = patient.name;
+            document.title = patient.name;
 
-        const familyPhoneContainer = document.getElementById('family-phone-container');
-        const renderFamilyPhone = () => {
-            familyPhoneContainer.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <p><strong>Contato Familiar:</strong> <span id="family-phone-text">${patient.familyPhone || 'Não informado'}</span></p>
-                    <button id="edit-family-phone-btn" class="text-[var(--primary)] text-sm font-semibold">Editar</button>
-                </div>`;
-            document.getElementById('edit-family-phone-btn').addEventListener('click', showFamilyPhoneInput);
+            document.getElementById('patient-details-container').innerHTML = `
+                <p><strong>Data de Nascimento:</strong> ${formatDate(patient.dob)}</p>
+                <p><strong>Idade:</strong> ${patient.age ? patient.age + ' anos' : 'Não informado'}</p>
+                <p><strong>Telefone:</strong> ${patient.phone || 'Não informado'}</p>
+                <p><strong>Contato Familiar:</strong> ${patient.familyPhone || 'Não informado'}</p>
+                <p class="sm:col-span-2"><strong>Endereço:</strong> ${patient.address || 'Não informado'}</p>
+            `;
+
+            document.getElementById('clinical-info-container').innerHTML = `
+                <div class="border-t border-[var(--border-color)] pt-4">
+                    <h3 class="font-semibold text-[var(--primary-text)]">Diagnóstico</h3>
+                    <p class="mt-2 whitespace-pre-wrap text-[var(--secondary-text)]">${patient.diagnostico || 'Não informado'}</p>
+                </div>
+                <div class="border-t border-[var(--border-color)] pt-4 mt-4">
+                    <h3 class="font-semibold text-[var(--primary-text)]">Objetivos</h3>
+                    <p class="mt-2 whitespace-pre-wrap text-[var(--secondary-text)]">${patient.objetivos || 'Não informado'}</p>
+                </div>
+                <div class="border-t border-[var(--border-color)] pt-4 mt-4">
+                    <h3 class="font-semibold text-[var(--primary-text)]">Intervenção/Abordagem</h3>
+                    <p class="mt-2 whitespace-pre-wrap text-[var(--secondary-text)]">${patient.intervencao || 'Não informado'}</p>
+                </div>
+            `;
+            renderProfilePicture();
         };
-        const showFamilyPhoneInput = () => {
-            familyPhoneContainer.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <input type="tel" id="family-phone-input" class="flex-grow px-2 py-1 bg-[var(--secondary-bg)] border border-[var(--border-color)] rounded-md" value="${patient.familyPhone || ''}" placeholder="Telefone do familiar">
-                    <button id="save-family-phone-btn" class="bg-[var(--primary)] text-white px-3 py-1 rounded-md text-sm">Salvar</button>
-                </div>`;
-            document.getElementById('save-family-phone-btn').addEventListener('click', () => {
-                patient.familyPhone = document.getElementById('family-phone-input').value;
-                updatePatientData(patient);
-                renderFamilyPhone();
-                showToast('Contato familiar atualizado!');
-            });
-        };
-        renderFamilyPhone();
-        
+
         const profilePicDisplay = document.getElementById('profile-picture-display');
         const profilePicInput = document.getElementById('profile-picture-input');
         const renderProfilePicture = () => {
@@ -261,7 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 reader.readAsDataURL(file);
             }
         });
-        renderProfilePicture();
 
         const linkForm = document.getElementById('link-form');
         const externalLinkInput = document.getElementById('external-link-input');
@@ -305,38 +308,97 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Sessão excluída.');
             }
         });
-        renderSessions();
 
         const optionsBtn = document.getElementById('patient-options-btn');
         const optionsMenu = document.getElementById('patient-options-menu');
         optionsBtn?.addEventListener('click', (e) => { e.stopPropagation(); optionsMenu.classList.toggle('hidden'); });
         document.addEventListener('click', () => optionsMenu.classList.add('hidden'));
 
-        document.getElementById('export-txt-btn')?.addEventListener('click', () => {
-            let content = `RELATÓRIO DO CLIENTE\n\n`;
-            content += `Nome: ${patient.name}\nData de Nascimento: ${formatDate(patient.dob)} (${patient.age} anos)\nTelefone: ${patient.phone}\nContato Familiar: ${patient.familyPhone}\nEndereço: ${patient.address}\n\n`;
-            content += `--- DIAGNÓSTICO ---\n${patient.diagnostico}\n\n`;
-            content += `--- OBJETIVOS ---\n${patient.objetivos}\n\n`;
-            content += `--- INTERVENÇÃO/ABORDAGEM ---\n${patient.intervencao}\n\n`;
-            content += `--- HISTÓRICO DE SESSÕES ---\n\n`;
-            patient.sessions.forEach(s => { content += `Data: ${new Date(s.id).toLocaleString('pt-BR')}\nAnotação: ${s.note}\n\n`; });
-            downloadFile(content, `relatorio_${patient.name.replace(/\s/g,'_')}.txt`, 'text/plain');
-            showToast('Relatório .txt gerado!');
-        });
-        
-        document.getElementById('export-single-json-btn')?.addEventListener('click', () => {
-            downloadFile(JSON.stringify(patient, null, 2), `backup_${patient.name.replace(/\s/g,'_')}.json`, 'application/json');
-            showToast('Backup do cliente exportado!');
+        document.getElementById('export-pdf-btn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const element = document.getElementById('pdf-export-area');
+            const opt = {
+                margin:       0.5,
+                filename:     `relatorio_${patient.name.replace(/\s/g,'_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().from(element).set(opt).save();
+            showToast('Relatório PDF gerado!');
         });
 
-        document.getElementById('delete-patient-btn')?.addEventListener('click', () => {
-            if (confirm(`ATENÇÃO! Deseja excluir o cliente "${patient.name}"?`)) {
+        document.getElementById('delete-patient-btn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (confirm(`ATENÇÃO! Deseja excluir o cliente "${patient.name}"? Esta ação não pode ser desfeita.`)) {
                 let patients = getFromDB('patientsDB_marcella');
                 saveToDB('patientsDB_marcella', patients.filter(p => p.id !== patientId));
                 sessionStorage.setItem('toastMessage', 'Cliente excluído com sucesso.');
                 window.location.href = 'index.html';
             }
         });
+
+        // Lógica de Edição
+        const editModal = document.getElementById('edit-patient-modal');
+        const openEditModalBtn = document.getElementById('edit-patient-btn');
+        const closeEditModalBtn = document.getElementById('cancel-edit-btn');
+        const editForm = document.getElementById('edit-patient-form');
+
+        const openEditModal = () => {
+            document.getElementById('edit-name').value = patient.name || '';
+            document.getElementById('edit-dob').value = patient.dob || '';
+            document.getElementById('edit-age').value = patient.age || '';
+            document.getElementById('edit-phone').value = patient.phone || '';
+            document.getElementById('edit-family-phone').value = patient.familyPhone || '';
+            document.getElementById('edit-address').value = patient.address || '';
+            document.getElementById('edit-diagnostico').value = patient.diagnostico || '';
+            document.getElementById('edit-objetivos').value = patient.objetivos || '';
+            document.getElementById('edit-intervencao').value = patient.intervencao || '';
+            editModal.classList.remove('hidden');
+        };
+
+        const closeEditModal = () => {
+            editModal.classList.add('hidden');
+        };
+        
+        document.getElementById('edit-dob').addEventListener('input', (e) => {
+            const ageInput = document.getElementById('edit-age');
+            if (!e.target.value) { ageInput.value = ''; return; }
+            const birthDate = new Date(e.target.value); const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+            ageInput.value = age >= 0 ? age : '';
+        });
+
+        openEditModalBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openEditModal();
+        });
+        closeEditModalBtn.addEventListener('click', closeEditModal);
+
+        editForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const updatedPatient = {
+                ...patient,
+                name: document.getElementById('edit-name').value.trim(),
+                dob: document.getElementById('edit-dob').value,
+                age: document.getElementById('edit-age').value,
+                phone: document.getElementById('edit-phone').value,
+                familyPhone: document.getElementById('edit-family-phone').value,
+                address: document.getElementById('edit-address').value.trim(),
+                diagnostico: document.getElementById('edit-diagnostico').value.trim(),
+                objetivos: document.getElementById('edit-objetivos').value.trim(),
+                intervencao: document.getElementById('edit-intervencao').value.trim(),
+            };
+            updatePatientData(updatedPatient);
+            renderAllPatientData();
+            closeEditModal();
+            showToast('Dados do cliente atualizados com sucesso!');
+        });
+        
+        renderAllPatientData();
+        renderSessions();
     }
 
     // --- PÁGINA DE ANOTAÇÕES ---
