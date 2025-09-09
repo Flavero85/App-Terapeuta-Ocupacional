@@ -1,5 +1,5 @@
 // ATUALIZAÇÃO CRÍTICA: Versão do cache incrementada para forçar a atualização do app.
-const CACHE_NAME = 'app-to-cache-v31';
+const CACHE_NAME = 'app-to-cache-v32';
 // Lista de arquivos e recursos essenciais para o funcionamento offline
 const URLS_TO_CACHE = [
   './',
@@ -22,7 +22,7 @@ self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('Cache v31 aberto e arquivos sendo adicionados.');
+      console.log('Cache v32 aberto e arquivos sendo adicionados.');
       return cache.addAll(URLS_TO_CACHE);
     })
   );

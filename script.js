@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // === SISTEMA DE NOTIFICAÇÃO (TOAST) ===
-    const showToast = (message, type = 'success') => {
+    const showToast = (message, type = 'success', duration = 1500) => {
         const container = document.getElementById('toast-container'); if (!container) return;
         const toast = document.createElement('div');
-        const bgColor = type === 'success' ? 'bg-[var(--primary)]' : 'bg-red-500';
+        const bgColor = type === 'success' ? 'bg-[var(--primary)]' : type === 'info' ? 'bg-sky-500' : 'bg-red-500';
         toast.className = `toast-notification ${bgColor} text-white font-semibold py-3 px-5 rounded-lg shadow-xl`;
         toast.style.animation = 'toast-in 0.5s ease-out forwards';
         toast.textContent = message;
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             toast.style.animation = 'toast-out 0.5s ease-in forwards';
             toast.addEventListener('animationend', () => toast.remove());
-        }, 2000); // Tempo da notificação reduzido para 2 segundos
+        }, duration);
     };
     const toastMessage = sessionStorage.getItem('toastMessage');
     if (toastMessage) { showToast(toastMessage); sessionStorage.removeItem('toastMessage'); }
@@ -408,6 +408,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('export-pdf-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
+            showToast('Gerando PDF...', 'info');
+            
             const element = document.getElementById('pdf-export-area');
             const optionsContainer = document.getElementById('patient-options-container');
             
@@ -424,11 +426,12 @@ document.addEventListener('DOMContentLoaded', () => {
             html2pdf().from(element).set(opt).save().then(() => {
                 optionsContainer.style.visibility = 'visible';
             });
-            showToast('Relatório PDF gerado!');
         });
         
         document.getElementById('export-txt-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
+            showToast('Gerando .txt...', 'info');
+
             let content = `RELATÓRIO DO CLIENTE\n\n`;
             content += `Nome: ${patient.name || 'Não informado'}\n`;
             content += `Data de Nascimento: ${formatDate(patient.dob)}\n`;
@@ -448,7 +451,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 content += `Nenhuma sessão registrada.\n`;
             }
             downloadFile(content, `relatorio_${patient.name.replace(/\s/g,'_')}.txt`, 'text/plain');
-            showToast('Relatório .txt gerado!');
         });
 
 
@@ -618,7 +620,6 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedCellId = cellId;
             const scheduleData = getFromDB('scheduleDB_marcella');
             const patients = getFromDB('patientsDB_marcella');
-            // Check fixed schedules to pre-populate modal correctly
             let appointment = scheduleData[cellId];
             if (!appointment) {
                 patients.forEach(p => {
@@ -688,7 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (customText) {
                     scheduleData[selectedCellId] = { patientName: customText, color: '#9ca3af' }; // Cinza para eventos
                 } else {
-                    delete scheduleData[selectedCellId]; // Limpa a célula se nada for selecionado
+                    delete scheduleData[selectedCellId];
                 }
                 saveToDB('scheduleDB_marcella', scheduleData);
                 renderSchedule(); 
@@ -706,7 +707,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const patients = getFromDB('patientsDB_marcella');
             const combinedSchedule = { ...manualSchedule };
             
-            // Adiciona horários fixos ao schedule combinado, sem sobrescrever os manuais
             patients.forEach(patient => {
                 if(patient.fixedSchedule && patient.fixedSchedule.days.length > 0 && patient.fixedSchedule.time) {
                     patient.fixedSchedule.days.forEach(day => {
@@ -719,7 +719,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const times = [];
-            for (let h = 7; h <= 20; h++) { times.push(`${h.toString().padStart(2, '0')}:00`); if (h < 20) times.push(`${h.toString().padStart(2, '0')}:30`); }
+            for (let h = 7; h <= 23; h++) {
+                times.push(`${h.toString().padStart(2, '0')}:00`);
+                if (h < 23) {
+                    times.push(`${h.toString().padStart(2, '0')}:30`);
+                }
+            }
             
             scheduleBody.innerHTML = '';
             times.forEach(time => {
@@ -734,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     if (appointment) {
                         cell.style.backgroundColor = appointment.isFixed 
-                            ? stringToHslColor(appointment.patientName, 50, 85) // Cor mais clara para fixos
+                            ? stringToHslColor(appointment.patientName, 50, 85)
                             : (appointment.color || stringToHslColor(appointment.patientName, 50, 60));
                         
                         cellClasses += appointment.isFixed 

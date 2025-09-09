@@ -41,10 +41,11 @@
 
         @keyframes page-fade-in { from { opacity: 0; } to { opacity: 1; } }
         @keyframes item-fade-in-up { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes modal-slide-in { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes modal-fade-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         @keyframes toast-in { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-page-fade-in { animation: page-fade-in 0.5s ease-out forwards; }
         .animate-item-fade-in-up { animation: item-fade-in-up 0.5s ease-out forwards; }
+        .modal-content.in { animation: modal-fade-in 0.3s ease-out forwards; }
         .btn-press { transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out; }
         .btn-press:active { transform: scale(0.97); box-shadow: none; }
     </style>
@@ -54,11 +55,11 @@
     <div id="toast-container" class="fixed bottom-36 right-4 z-[100] space-y-3"></div>
 
     <div class="max-w-4xl mx-auto">
-        <header class="relative flex items-center justify-center gap-4 mb-8 text-center sm:text-left">
-            <img src="icon-512.jpg" alt="Logótipo" class="w-16 h-16 rounded-2xl shadow-lg">
-            <div>
-                <h1 class="text-3xl font-bold text-[var(--primary-dark)]">Marcella Dainese</h1>
-                <p class="text-lg mt-1 text-[var(--secondary-text)]">Terapia Ocupacional</p>
+        <header class="relative mb-8">
+            <div class="flex flex-col items-center justify-center text-center">
+                <img src="icon-512.jpg" alt="Logótipo" class="w-20 h-20 rounded-2xl shadow-lg mb-4">
+                <h1 class="text-4xl font-bold text-[var(--primary-dark)]">Marcella Dainese</h1>
+                <p class="text-xl mt-1 text-[var(--secondary-text)]">Terapeuta Ocupacional</p>
             </div>
             <button id="main-settings-btn" class="absolute top-0 right-0 btn-press text-[var(--primary-dark)] p-2 rounded-full hover:bg-black/10 transition-colors">
                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17v2h18v-2H3zm0-7v2h18v-2H3zm0-7v2h18V3H3z"/></svg>
@@ -85,8 +86,8 @@
     </div>
 
     <!-- Modal de Configurações -->
-    <div id="settings-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-        <div class="modal-content dynamic-card rounded-t-2xl shadow-2xl w-full max-w-md p-6 max-h-[80vh] overflow-y-auto">
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="modal-content dynamic-card rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[80vh] overflow-y-auto">
             <div class="flex justify-between items-center pb-4 border-b border-[var(--border-color)]">
                 <h2 class="font-bold text-lg text-[var(--primary-dark)]">Configurações</h2>
                 <button id="close-settings-btn" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button>
